@@ -4,13 +4,13 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#inlcude <netinet/in.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 
 struct msg_echo {
     unsigned short seq;
     unsigned short reserve;
-    char meg[32];
+    char msg[32];
 };
 
 int main(int argc, char *argv[])
@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     struct msg_echo echo;
     
     if (argc != 2) {
-        fprintf(stderr, "Usage: ./udpsrv port");
+        fprintf(stderr, "Usage: ./udpsrv port\n");
         exit(1);
     }
     
@@ -31,11 +31,11 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    myport = strtol(argv[2], NULL, 10);
+    myport = strtol(argv[1], NULL, 10);
     memset(&servskt, 0, sizeof servskt);
     servskt.sin_family = AF_INET;
     servskt.sin_port = htons(myport);
-    servskt.sin.addr.s.addr = htonl(INADDR_ANY);
+    servskt.sin_addr.s_addr = htonl(INADDR_ANY);
     if (bind(s, (struct sockaddr *)&servskt, sizeof servskt) < 0) {
         perror("bind");
         exit(1);
@@ -50,11 +50,15 @@ int main(int argc, char *argv[])
         }
         printf("%s\n", echo.msg);
         echo.seq++;
-        servlen = strlen(echo.msg);
-        if ((count = sendto(s, &echo, sizeof echo, 0,
-                    (struct sockaddr *)&servskt, &servlen)) < 0) {
+        echo.msg[count - sizeof(unsigned short) * 2] = '\0';
+        servlen = strlen(echo.msg) + sizeof(unsigned short) * 2;
+        if ((count = sendto(s, &echo, servlen, 0,
+                    (struct sockaddr *)&recvskt, recvlen)) < 0) {
             perror("sendto");
             exit(1);
         }
     }
+    close(s);
+
+    return 0;
 }

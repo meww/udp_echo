@@ -43,8 +43,9 @@ int main(int argc, char *argv[])
         if (fgets(echo.msg, sizeof echo.msg, stdin) == NULL) {
             break;
         }
-        len = strlen(echo.msg);
-        if ((count = sendto(s, &echo, len, 0, 
+        echo.msg[strlen(echo.msg) - 1] = '\0';
+        servlen = strlen(echo.msg) + sizeof(unsigned short) * 2;
+        if ((count = sendto(s, &echo, servlen, 0, 
                     (struct sockaddr *)&servskt, sizeof servskt)) < 0) {
             perror("sendto");
             exit(1);
@@ -55,6 +56,10 @@ int main(int argc, char *argv[])
             perror("recvfrom");
             exit(1);
         }
+        echo.msg[count - sizeof(unsigned short) * 2] = '\0';
+        printf("seq: %d, msg: %s\n", echo.seq, echo.msg);
     }
     close(s);
+
+    return 0;
 }
