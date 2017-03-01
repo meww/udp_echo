@@ -15,10 +15,11 @@ struct msg_echo {
 
 int main(int argc, char *argv[])
 {
-    int s, count, len;
+    int s, count, servlen;
     struct msg_echo echo;
-    struct sockaddr_in myskt;
+    struct sockaddr_in servskt, recvskt;
     in_port_t myport;
+    socklen_t recvlen;
     
     if (argc != 3) {
         fprintf(stderr, "Usage: ./udpcli localhost port\n");
@@ -30,10 +31,10 @@ int main(int argc, char *argv[])
         exit(1);
     }
     myport = strtol(argv[2], NULL, 10);
-    memset(&myskt, 0, sizeof myskt);
-    myskt.sin_family = AF_INET;
-    myskt.sin_port = htons(myport);
-    inet_aton(argv[1], &myskt.sin_addr);
+    memset(&servskt, 0, sizeof servskt);
+    servskt.sin_family = AF_INET;
+    servskt.sin_port = htons(myport);
+    inet_aton(argv[1], &servskt.sin_addr);
 
     echo.seq = 0;
     
@@ -42,7 +43,18 @@ int main(int argc, char *argv[])
         if (fgets(echo.msg, sizeof echo.msg, stdin) == NULL) {
             break;
         }
-        len = strlen(echo.msg)
-        sendto(
+        len = strlen(echo.msg);
+        if ((count = sendto(s, &echo, len, 0, 
+                    (struct sockaddr *)&servskt, sizeof servskt)) < 0) {
+            perror("sendto");
+            exit(1);
+        }
+        recvlen = sizeof recvskt;
+        if ((count = recvfrom(s, &echo, sizeof echo, 0,
+                    (struct sockaddr *)&recvskt, &recvlen)) < 0) {
+            perror("recvfrom");
+            exit(1);
+        }
     }
+    close(s);
 }
