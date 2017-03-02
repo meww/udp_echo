@@ -48,10 +48,12 @@ int main(int argc, char *argv[])
             perror("recvfrom");
             exit(1);
         }
-        printf("%s\n", echo.msg);
-        echo.seq++;
+
         echo.msg[count - sizeof(unsigned short) * 2] = '\0';
         servlen = strlen(echo.msg) + sizeof(unsigned short) * 2;
+        printf("%s\n", echo.msg);
+        echo.seq++;
+
         if ((count = sendto(s, &echo, servlen, 0,
                     (struct sockaddr *)&recvskt, recvlen)) < 0) {
             perror("sendto");

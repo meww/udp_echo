@@ -45,6 +45,14 @@ int main(int argc, char *argv[])
         }
         echo.msg[strlen(echo.msg) - 1] = '\0';
         servlen = strlen(echo.msg) + sizeof(unsigned short) * 2;
+
+        if (strcmp(echo.msg, "FIN") == 0) {
+            printf("Finished\n");
+            break;
+        } else if (echo.seq == 10) {
+            printf("seq = 10\n");
+            break;
+        }
         if ((count = sendto(s, &echo, servlen, 0, 
                     (struct sockaddr *)&servskt, sizeof servskt)) < 0) {
             perror("sendto");
